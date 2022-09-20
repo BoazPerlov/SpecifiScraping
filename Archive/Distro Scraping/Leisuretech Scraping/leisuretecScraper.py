@@ -32,15 +32,12 @@ for category in categoryList:
                 subSubSoup = bs(subSubHtml.text,'lxml')
                 products = subSubSoup.find_all('a',{'class':'product-page-link'})
                 for product in products:
-                    height = ''
-                    depth = ''
-                    weight = ''
                     prodUrl = 'https://www.leisuretec.co.uk' + product['href']
                     productHtml = requests.get(('https://www.leisuretec.co.uk' + product['href']))
                     #driver.set_page_load_timeout(30)
                     #driver.get(prodUrl)
                     productSoup = bs(productHtml.text,'lxml')
-                    manual = 'https://www.leisuretec.co.uk' + productSoup.find('a',{'class':'product-page-information-attachments-list-item-link'})['href']
+                    manual = productSoup.find('a',{'class':'product-page-information-attachments-list-item-link'})['href']
                     image = 'https://www.leisuretec.co.uk' + productSoup.find('img',{'id':'main-img'})['src']
                     rrp = productSoup.find('div',{'class':'product-page-price'}).get_text()
                     brands = productSoup.find_all('dt')
@@ -59,21 +56,7 @@ for category in categoryList:
                     #specs = specDiv.get_text()
                     #manualLink = productSoup.find('a',{'class':'product-page-information-attachments-list-item-link'})['href']
                     #print(productSoup.find_all('li',{'class':'product-page-tabs-list-item'})['href'])
-                    tabThree = productSoup.find('div', {'id':'tab-3'}).findChildren('li')
-                    specString = ''
-                    for spec in tabThree:
-                        specString += '\n' + spec.get_text()
-                        if re.search("^Weight:", spec.get_text()):
-                            weight = spec.get_text().replace('Weight: ',"")
-                        if re.search("^Height:", spec.get_text()):
-                            height = spec.get_text().replace('Height: ',"")
-                        if re.search("^Depth", spec.get_text()):
-                            depth = spec.get_text().replace('Depth: ',"").replace('Depth (incl front): ','')
-                    tabTwo = productSoup.find('div',{'id':'tab-2'}).findChildren('li')
-                    featureString = ""
-                    for feature in tabTwo:
-                        featureString += '\n' + feature.get_text()
-                    scrapDict = {'Link':'https://www.leisuretec.co.uk' + product['href'], 'brand':productBrand, 'productName':productName,'RRP':rrp, 'mpn':mpn, 'Description':description,'image':image, 'manual':manual, 'specs': specString, 'features':featureString, 'Weight':weight,'Height':height, 'Depth':depth}
+                    scrapDict = {'Link':'https://www.leisuretec.co.uk' + product['href'], 'brand':productBrand, 'productName':productName,'RRP':rrp, 'mpn':mpn, 'Description':description,'image':image, 'manual':manual}
                     dfLeisureTec = dfLeisureTec.append(scrapDict, ignore_index=True)
                     dfLeisureTec.to_excel('LeisureTec v2.xlsx',index=False)
                 
