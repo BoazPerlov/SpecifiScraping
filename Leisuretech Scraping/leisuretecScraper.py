@@ -63,7 +63,7 @@ for category in categoryList:
                     specString = ''
                     for spec in tabThree:
                         specString += '\n' + spec.get_text()
-                        if re.search("^Weight:", spec.get_text()):
+                        if re.search("^Weight", spec.get_text()):
                             weight = spec.get_text().replace('Weight: ',"")
                         if re.search("^Height:", spec.get_text()):
                             height = spec.get_text().replace('Height: ',"")
