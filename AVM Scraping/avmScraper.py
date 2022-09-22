@@ -16,37 +16,40 @@ for i in range(1,22):
                 manual = ''
                 image = ''
                 productUrl = product['href']
-                productHtml = requests.get(productUrl)
-                productSoup = bs(productHtml.text,'lxml')
                 try:
-                        manual = productSoup.find('div',{'class':'documents-tab-content'}).findChild('a')['href']
+                        productHtml = requests.get(productUrl)
+                        productSoup = bs(productHtml.text,'lxml')
+                        try:
+                                manual = productSoup.find('div',{'class':'documents-tab-content'}).findChild('a')['href']
+                        except:
+                                pass
+                        try:
+                                image = productSoup.find('img',{'id','image-zoom-main'})['src']
+                        except:
+                                pass
+                        try:
+                                productName = productSoup.find('h1',{'class','card-header'}).get_text()
+                        except:
+                                pass
+                        try:
+                                rrp = productSoup.find('span',{'class','net price'}).get_text()
+                        except:
+                                pass
+                        try:
+                                description = productSoup.find('div',{'class','short-description'}).get_text()
+                        except:
+                                pass
+                        
+                        try:
+                                productFeatures = productSoup.find('div',{'class','feature-row'}).findChildren('li')
+                                for feature in productFeatures:
+                                        features.append(feature.get_text())
+                        except:
+                                pass
+                        scrapDict = {'Link':product['href'], 'features':features, 'productName':productName,'RRP':rrp, 'Description':description,'image':image, 'manual':manual}
+                        dfNew = dfNew.append(scrapDict, ignore_index=True)
                 except:
                         pass
-                try:
-                        image = productSoup.find('img',{'id','image-zoom-main'})['src']
-                except:
-                        pass
-                try:
-                        productName = productSoup.find('h1',{'class','card-header'}).get_text()
-                except:
-                        pass
-                try:
-                        rrp = productSoup.find('span',{'class','net price'}).get_text()
-                except:
-                        pass
-                try:
-                        description = productSoup.find('div',{'class','short-description'}).get_text()
-                except:
-                        pass
-                
-                try:
-                        productFeatures = productSoup.find('div',{'class','feature-row'}).findChildren('li')
-                        for feature in productFeatures:
-                                features.append(feature.get_text())
-                except:
-                        pass
-                scrapDict = {'Link':product['href'], 'features':features, 'productName':productName,'RRP':rrp, 'Description':description,'image':image, 'manual':manual}
-                dfNew = dfNew.append(scrapDict, ignore_index=True)
         dfNew.to_excel('AVM.xlsx',index=False)
 dfNew.to_excel('AVM.xlsx',index=False)
 		
