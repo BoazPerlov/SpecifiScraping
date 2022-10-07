@@ -10,7 +10,7 @@ import re
 from datetime import datetime
 from tqdm import tqdm
 
-doneCats = ['cables-and-accessories','cable-management','cctv-fire-security','data-networking','domestic-appliances','heating-ventilation', 'industrial-control', 'lamps-tubes']
+doneCats = ['cables-and-accessories','cable-management','cctv-fire-security','data-networking','domestic-appliances','heating-ventilation','lamps-tubes','lighting-luminaires','power-tools']
 
 dfOriginalCef = pd.read_excel('cefScraping Updated.xlsx')
 linkList = dfOriginalCef['Link'].to_list()
@@ -75,7 +75,7 @@ def directProductPage(productLink):
 cefSoup = bs(requests.get((originalUrl)).text,'lxml')
 catLists = cefSoup.find_all('a',{'class':'divider-vertical'})
 for catList in tqdm(catLists):
-    #if not any(ele in catList['href'] for ele in doneCats):
+    if not any(ele in catList['href'] for ele in doneCats):
         for i in range(1,25):
             catUrl = catList['href'] + '?page=' + str(i)
             subCatSoup = bs(requests.get(catUrl).text,'lxml')
