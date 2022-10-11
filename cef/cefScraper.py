@@ -10,7 +10,7 @@ import re
 from datetime import datetime
 from tqdm import tqdm
 
-doneCats = ['cables-and-accessories','cable-management','cctv-fire-security','data-networking','domestic-appliances','heating-ventilation','lamps-tubes','lighting-luminaires','power-tools']
+doneCats = ['cables-and-accessories','cable-management','cctv-fire-security','data-networking','domestic-appliances','tools-fixings','heating-ventilation','lamps-tubes','switchgear-distribution','lighting-luminaires','power-tools', 'test-equipment', 'tools-fixings', 'industrial-control']
 
 dfOriginalCef = pd.read_excel('cefScraping Updated.xlsx')
 linkList = dfOriginalCef['Link'].to_list()
@@ -24,6 +24,7 @@ def directProductPage(productLink):
     mpn = ''
     sku = ''
     brand = ''
+    productName = ''
     weight = ''
     warranty = ''
     description = ''
@@ -33,18 +34,19 @@ def directProductPage(productLink):
     height = ''
     width = ''
     docsList = []
+    featuresList = []
     productSoup = bs(requests.get(productLink.get_attribute('href')).text,'lxml')
     link = productLink.get_attribute('href')
     if link not in linkList:
         try:
             mpn = productSoup.find('ul',{'class','product-codes'}).findChild('strong').get_text()
-            sku = productSoup.find('ul',{'class','product-codes'}).findChild('li').find_next_sibling().findChild('strong').get_text()          
+            sku = productSoup.find('ul',{'class','product-codes'}).findChild('li').find_next_sibling().findChild('strong').get_text()   
+            productName = productSoup.find('h1',{'class','details_page'}).get_text()
+            featuresList = productSoup.find('ul',{'class','product-features'}).findChildren('li')       
         except:
             pass
-        productName = productSoup.find('h1',{'class','details_page'}).get_text()
         images = productSoup.find_all('img',{'class':'product-image'})
         imageList = []
-        featuresList = productSoup.find('ul',{'class','product-features'}).findChildren('li')
         docs = productSoup.find_all('a',{'class':'download_tracker'})
         for doc in docs:
             docsList.append(doc['href'])
@@ -75,49 +77,49 @@ def directProductPage(productLink):
 cefSoup = bs(requests.get((originalUrl)).text,'lxml')
 catLists = cefSoup.find_all('a',{'class':'divider-vertical'})
 for catList in tqdm(catLists):
-    if not any(ele in catList['href'] for ele in doneCats):
+    #if not any(ele in catList['href'] for ele in doneCats):
         for i in range(1,25):
             catUrl = catList['href'] + '?page=' + str(i)
             subCatSoup = bs(requests.get(catUrl).text,'lxml')
             subCatList = subCatSoup.find_all('div',{'class':'top_level'})
             for subCat in subCatList:
-                nextCategorySoup = bs(requests.get(subCat.findChild('a')['href']).text,'lxml')
-                nextCategories = nextCategorySoup.find_all('div', {'class':'product_category_image'})
-                if nextCategories:
-                    for nextCategory in nextCategories:
+                for l in range(1,25):
+                    ncLink = subCat.findChild('a')['href'] + '?page=' + str(l)
+                    nextCategorySoup = bs(requests.get(ncLink).text,'lxml')
+                    nextCategories = nextCategorySoup.find_all('div', {'class':'product_category_image'})
+                    if nextCategories:
+                        for nextCategory in nextCategories:
+                            for j in range(1,25):
+                                productPageUrl = nextCategory.findChild('a')['href'] + '?page='+str(j)
+                                nextNextCategoriesSoup = bs(requests.get(productPageUrl).text,'lxml')
+                                nextNextCategories = nextNextCategoriesSoup.find_all('div', {'class':'product_category_image'})
+                                if nextNextCategories:
+                                    for nextnextCat in nextNextCategories: 
+                                        for k in range(1,25):
+                                            productPageUrl = nextnextCat.findChild('a')['href'] + '?page='+str(k)
+                                            driver.set_page_load_timeout(30)
+                                            driver.get(productPageUrl)
+                                            productLinks = driver.find_elements(By.CLASS_NAME, 'product-listings__image-wrapper')
+                                            for productLink in productLinks:
+                                                productDict = directProductPage(productLink)
+                                                dfCef = dfCef.append(productDict, ignore_index=True)
+                                else:
+                                    driver.set_page_load_timeout(30)
+                                    driver.get(productPageUrl)
+                                    productLinks = driver.find_elements(By.CLASS_NAME, 'product-listings__image-wrapper')
+                                    for productLink in productLinks:
+                                        productDict = directProductPage(productLink)
+                                        dfCef = dfCef.append(productDict, ignore_index=True)
+                            dfCef.to_excel('cefScraping.xlsx',index=False) 
+                    else:
                         for j in range(1,25):
-                            productPageUrl = nextCategory.findChild('a')['href'] + '?page='+str(j)
-                            nextNextCategoriesSoup = bs(requests.get(productPageUrl).text,'lxml')
-                            nextNextCategories = nextNextCategoriesSoup.find_all('div', {'class':'product_category_image'})
-                            if nextNextCategories:
-                                for nextnextCat in nextNextCategories: 
-                                    for k in range(1,25):
-                                        productPageUrl = nextnextCat.findChild('a')['href'] + '?page='+str(k)
-                                        driver.set_page_load_timeout(30)
-                                        driver.get(productPageUrl)
-                                        productLinks = driver.find_elements(By.CLASS_NAME, 'product-listings__image-wrapper')
-                                        for productLink in productLinks:
-                                            productDict = directProductPage(productLink)
-                                            dfCef = dfCef.append(productDict, ignore_index=True)
-                            else:
-                                driver.set_page_load_timeout(30)
-                                driver.get(productPageUrl)
-                                productLinks = driver.find_elements(By.CLASS_NAME, 'product-listings__image-wrapper')
-                                for productLink in productLinks:
-                                    productDict = directProductPage(productLink)
-                                    dfCef = dfCef.append(productDict, ignore_index=True)
+                            productPageUrl = subCat.findChild('a')['href'] + '?page='+str(j)
+                            driver.set_page_load_timeout(30)
+                            driver.get(productPageUrl)
+                            productLinks = driver.find_elements(By.CLASS_NAME, 'product-listings__image-wrapper')
+                            for productLink in productLinks:
+                                productDict = directProductPage(productLink)
+                                dfCef = dfCef.append(productDict, ignore_index=True)
                         dfCef.to_excel('cefScraping.xlsx',index=False) 
-                else:
-                    for j in range(1,25):
-                        productPageUrl = subCat.findChild('a')['href'] + '?page='+str(j)
-                        driver.set_page_load_timeout(30)
-                        driver.get(productPageUrl)
-                        productLinks = driver.find_elements(By.CLASS_NAME, 'product-listings__image-wrapper')
-                        for productLink in productLinks:
-                            productDict = directProductPage(productLink)
-                            dfCef = dfCef.append(productDict, ignore_index=True)
-                    dfCef.to_excel('cefScraping.xlsx',index=False) 
 
-now = datetime.now()
-dfCef.to_excel('cefScraping.xlsx'+now,index=False) 
 
